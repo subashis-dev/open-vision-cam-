@@ -232,10 +232,10 @@ async function pollSystem() {
 
     const provEl = document.getElementById("hud-provider");
     if (sys.directml_active) {
-      provEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>DirectML iGPU: ACTIVE</span>`;
+      provEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>DirectML GPU/APU: ACTIVE</span>`;
       provEl.className = "px-3 py-1.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 text-emerald-300 flex items-center gap-2";
     } else {
-      provEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span><span>Ryzen CPU Mode</span>`;
+      provEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span><span>CPU Compute Mode</span>`;
       provEl.className = "px-3 py-1.5 rounded-xl bg-slate-900/90 border border-amber-500/30 text-amber-300 flex items-center gap-2";
     }
 

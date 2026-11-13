@@ -19,7 +19,7 @@ COCO_CLASSES = [
 
 
 class EdgeDetector:
-    """YOLOX-Nano ONNX Detector accelerated via AMD DirectML (DmlExecutionProvider) or Ryzen CPU."""
+    """YOLOX-Nano ONNX Detector accelerated via DirectML (Any GPU / Integrated APU) or CPU."""
 
     def __init__(self, model_path: str = "models/yolox_nano.onnx", prefer_directml: bool = True):
         self.model_path = model_path

@@ -88,7 +88,7 @@ async def get_system_status():
         "ram_percent": mem.percent,
         "ram_used_gb": round(mem.used / (1024 ** 3), 2),
         "ram_total_gb": round(mem.total / (1024 ** 3), 2),
-        "processor": platform.processor() or "AMD Ryzen Edge CPU",
+        "processor": platform.processor() or "Multi-Core Edge CPU",
         "providers": detector.active_providers,
         "directml_active": "DmlExecutionProvider" in detector.active_providers,
         "last_latency_ms": detector.last_latency_ms,
