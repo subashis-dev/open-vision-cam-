@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenVisionCam — Sovereign Edge AI NVR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body class="p-3 md:p-5">
+  <div class="max-w-[1600px] mx-auto space-y-4">
+
+    <!-- Top Header & Hardware HUD -->
+    <header class="glass-panel rounded-2xl px-5 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center text-xl shadow-[0_0_20px_rgba(0,243,255,0.2)]">
+          👁️
+        </div>
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h1 class="text-lg md:text-xl font-bold tracking-tight text-white" style="font-family: 'Space Grotesk', sans-serif;">
+              OpenVisionCam
+            </h1>
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
+              Edge NVR v1.0
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">100% Local AMD Ryzen + Radeon DirectML Vision Intelligence</p>
+        </div>
+      </div>
+
+      <!-- Hardware Telemetry Pills -->
+      <div class="flex flex-wrap items-center gap-2 text-xs font-mono">
+        <div id="hud-provider" class="px-3 py-1.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 text-emerald-300 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>DirectML iGPU: Checking...</span>
+        </div>
+        <div id="hud-latency" class="px-3 py-1.5 rounded-xl bg-slate-900/90 border border-white/10 text-cyan-300">
+          Latency: -- ms
+        </div>
+        <div id="hud-cpu" class="px-3 py-1.5 rounded-xl bg-slate-900/90 border border-white/10 text-slate-300">
+          CPU: --% | RAM: --%
+        </div>
+        <button onclick="openCameraModal()" class="px-3.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-200 font-semibold transition flex items-center gap-1.5">
+          <span>+</span> Add / Switch Camera
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+
+      <!-- Left/Center: Live Stream & Interactive Zone Canvas (8 cols) -->
+      <div class="xl:col-span-8 space-y-4">
+        <div class="glass-panel rounded-2xl p-4 space-y-3">
+
+          <!-- Camera Bar & Zone Drawing Toolbar -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/10">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono text-slate-400">ACTIVE FEED:</span>
+              <select id="camera-select" onchange="switchCamera(this.value)" class="bg-slate-900 border border-white/15 rounded-lg px-3 py-1.5 text-xs font-medium text-white focus:outline-none focus:border-cyan-400">
+              </select>
+              <span id="cam-status-badge" class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                online
+              </span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5 text-xs">
+              <button id="btn-grid-toggle" onclick="toggleGridView()" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-violet-500/20 border border-white/10 hover:border-violet-400/40 text-violet-300 transition font-mono">
+                ⊞ Grid View
+              </button>
+              <button onclick="takeSnapshot()" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-400/40 text-emerald-300 transition font-mono">
+                📸 Snapshot
+              </button>
+              <button id="btn-draw-poly" onclick="startZoneDraw('polygon')" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-400/40 text-cyan-300 transition font-mono">
+                ⬠ Draw Zone
+              </button>
+              <button id="btn-draw-line" onclick="startZoneDraw('tripwire')" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-pink-500/20 border border-white/10 hover:border-pink-400/40 text-pink-300 transition font-mono">
+                ╱ Draw Tripwire
+              </button>
+              <button id="btn-finish-zone" onclick="finishZoneDraw()" class="hidden px-2.5 py-1.5 rounded-lg bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 font-mono">
+                ✓ Save Shape
+              </button>
+              <button id="btn-cancel-zone" onclick="cancelZoneDraw()" class="hidden px-2.5 py-1.5 rounded-lg bg-rose-500/20 border border-rose-400/40 text-rose-300 font-mono">
+                ✕ Cancel
+              </button>
+              <button onclick="clearCameraZones()" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-rose-500/20 border border-white/10 text-slate-400 hover:text-rose-300 transition font-mono">
+                🗑 Clear Zones
+              </button>
+            </div>
+          </div>
+
+          <!-- Video Viewport + Canvas Overlay -->
+          <div id="viewport-wrapper" class="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
+            <img id="live-stream" src="/api/stream/cam-1" alt="Live Camera Feed" class="w-full h-full object-contain select-none" />
+            <canvas id="zone-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+
+            <!-- Drawing Instruction Banner -->
+            <div id="draw-hint" class="hidden absolute top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-slate-950/90 border border-cyan-400/50 text-xs font-mono text-cyan-200 shadow-lg">
+              Click points on the video to draw. Click "Save Shape" when done.
+            </div>
+          </div>
+
+          <!-- Multi-Camera Grid View (Hidden by default) -->
+          <div id="grid-viewport" class="hidden grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+
+          <!-- Detection Confidence & Target Filter Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-4 pt-1 text-xs">
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-slate-400">CONFIDENCE THRESHOLD:</span>
+              <input id="conf-slider" type="range" min="20" max="85" value="42" oninput="updateConfLabel(this.value)" onchange="saveConfidence(this.value)" class="cyber-range w-36" />
+              <span id="conf-label" class="font-mono text-cyan-300 font-bold">42%</span>
+            </div>
+            <div class="flex items-center gap-2 font-mono text-slate-400">
+              <span>STREAM FPS:</span>
+              <span id="hud-fps" class="text-white font-bold">--</span>
+              <span class="mx-1 text-slate-600">|</span>
+              <span>ACTIVE TARGETS:</span>
+              <span id="hud-targets" class="text-cyan-300 font-bold">0</span>
+            </div>
+          </div>
+
+          <!-- Target Class Filter Pills -->
+          <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10 text-[11px] font-mono">
+            <span class="text-slate-400">DETECT TARGETS:</span>
+            <button onclick="toggleTargetGroup('person', this)" data-group="person" class="target-pill px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-400/50 text-cyan-200 transition">
+              👤 Person
+            </button>
+            <button onclick="toggleTargetGroup('vehicle', this)" data-group="vehicle" class="target-pill px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-400/50 text-cyan-200 transition">
+              🚗 Vehicle
+            </button>
+            <button onclick="toggleTargetGroup('bicycle', this)" data-group="bicycle" class="target-pill px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-400/50 text-cyan-200 transition">
+              🚲 Bicycle
+            </button>
+            <button onclick="toggleTargetGroup('pet', this)" data-group="pet" class="target-pill px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-400/50 text-cyan-200 transition">
+              🐾 Pet
+            </button>
+            <button onclick="toggleTargetGroup('package', this)" data-group="package" class="target-pill px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-400/50 text-cyan-200 transition">
+              📦 Package
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right Sidebar: Modular Feature Toggles + AI Story Briefing (4 cols) -->
+      <div class="xl:col-span-4 space-y-4">
+
+        <!-- Modular Feature Switches -->
+        <div class="glass-panel rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-white/10 pb-2">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
+              🎛️ Modular Feature Controls
+            </h2>
+            <span class="text-[10px] font-mono text-cyan-300">Live Toggle</span>
+          </div>
+
+          <div class="space-y-2.5 text-xs">
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-white/5">
+              <div>
+                <div class="font-semibold text-white">Neural Object Detection</div>
+                <div class="text-[11px] text-slate-400">YOLOX-Nano on AMD DirectML iGPU</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="tog-detection" onchange="toggleFeature('detection_enabled', this.checked)" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-white/5">
+              <div>
+                <div class="font-semibold text-white">Multi-Target Tracking</div>
+                <div class="text-[11px] text-slate-400">Persistent IDs, trails & dwell time</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="tog-tracking" onchange="toggleFeature('tracking_enabled', this.checked)" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-white/5">
+              <div>
+                <div class="font-semibold text-white">Zones & Tripwire Alarms</div>
+                <div class="text-[11px] text-slate-400">Virtual intrusion polygons & lines</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="tog-zones" onchange="toggleFeature('zones_enabled', this.checked)" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-white/5">
+              <div>
+                <div class="font-semibold text-white">Event DVR Clip Recorder</div>
+                <div class="text-[11px] text-slate-400">Rolling ring-buffer MP4 clip saving</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="tog-dvr" onchange="toggleFeature('dvr_enabled', this.checked)" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-white/5">
+              <div>
+                <div class="font-semibold text-white">Natural Language Search</div>
+                <div class="text-[11px] text-slate-400">Semantic query over event timeline</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="tog-nlp" onchange="toggleFeature('nlp_search_enabled', this.checked)" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-white/5">
+              <div>
+                <div class="font-semibold text-white">AI Incident Briefings</div>
+                <div class="text-[11px] text-slate-400">Automated natural-language story log</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="tog-summary" onchange="toggleFeature('ai_summary_enabled', this.checked)" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-white/5">
+              <div>
+                <div class="font-semibold text-white">Browser Sound Alerts</div>
+                <div class="text-[11px] text-slate-400">Audio ping on perimeter intrusion</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="tog-sound" onchange="toggleFeature('sound_alerts_enabled', this.checked)" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Incident Story Briefing Card -->
+        <div id="summary-panel" class="glass-panel rounded-2xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between border-b border-white/10 pb-2">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
+              🧠 AI Security Briefing
+            </h2>
+            <div class="flex items-center gap-2 text-[11px] font-mono">
+              <button onclick="exportReport('txt')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-cyan-500/20 text-cyan-300 border border-white/10">⬇ .TXT</button>
+              <button onclick="exportReport('json')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-violet-500/20 text-violet-300 border border-white/10">⬇ .JSON</button>
+              <button onclick="loadSummary()" class="text-cyan-300 hover:underline">↻</button>
+            </div>
+          </div>
+          <div id="summary-headline" class="text-xs font-semibold text-cyan-200">
+            Initializing intelligence briefing...
+          </div>
+          <p id="summary-narrative" class="text-xs text-slate-300 leading-relaxed"></p>
+          <ul id="summary-highlights" class="space-y-1 text-[11px] font-mono text-slate-400 max-h-32 overflow-y-auto"></ul>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bottom Section: Natural Language Search & Event DVR Timeline -->
+    <section class="glass-panel rounded-2xl p-4 space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-white/10 pb-3">
+        <div>
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
+            🔍 Smart Event Timeline & DVR Playback
+          </h2>
+          <p class="text-xs text-slate-400">Search detected incidents using plain English or inspect recorded MP4 clips</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <input
+            id="nlp-search-input"
+            type="text"
+            placeholder="Search e.g. 'person in driveway', 'car', 'tripwire', 'last hour'..."
+            oninput="debouncedSearch()"
+            class="w-72 md:w-96 bg-slate-900 border border-white/15 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+          />
+          <select id="severity-filter" onchange="loadEvents()" class="bg-slate-900 border border-white/15 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none">
+            <option value="all">All Events</option>
+            <option value="alert">Zone Alerts Only</option>
+            <option value="info">General Detections</option>
+          </select>
+          <button onclick="clearAllEvents()" class="px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-mono transition">
+            Clear Log
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Query Chips -->
+      <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+        <span class="text-slate-500">Quick Filters:</span>
+        <button onclick="quickSearch('')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/10 text-slate-300">All</button>
+        <button onclick="quickSearch('person')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-cyan-500/20 border border-white/10 text-cyan-300">Person</button>
+        <button onclick="quickSearch('vehicle')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-violet-500/20 border border-white/10 text-violet-300">Vehicle</button>
+        <button onclick="quickSearch('driveway')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-pink-500/20 border border-white/10 text-pink-300">Driveway Zone</button>
+        <button onclick="quickSearch('tripwire')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-amber-500/20 border border-white/10 text-amber-300">Tripwire Crossings</button>
+      </div>
+
+      <!-- Events Grid -->
+      <div id="events-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[420px] overflow-y-auto pr-1">
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Add / Switch Camera Modal -->
+  <div id="camera-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel rounded-2xl max-w-lg w-full p-5 space-y-4 border border-cyan-400/30">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <h3 class="text-base font-bold text-white">Configure Camera Source</h3>
+        <button onclick="closeCameraModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 font-mono mb-1">Camera ID</label>
+          <input id="cam-id-input" type="text" value="cam-2" class="w-full bg-slate-900 border border-white/15 rounded-xl px-3 py-2 text-white" />
+        </div>
+        <div>
+          <label class="block text-slate-400 font-mono mb-1">Camera Name</label>
+          <input id="cam-name-input" type="text" value="Front Gate RTSP" class="w-full bg-slate-900 border border-white/15 rounded-xl px-3 py-2 text-white" />
+        </div>
+        <div>
+          <label class="block text-slate-400 font-mono mb-1">Stream Source (RTSP URL, webcam:0, or demo:simulated)</label>
+          <input id="cam-src-input" type="text" placeholder="rtsp://user:pass@192.168.1.50:554/stream1" class="w-full bg-slate-900 border border-white/15 rounded-xl px-3 py-2 text-white font-mono" />
+        </div>
+        <div class="flex flex-wrap gap-2 pt-1">
+          <button onclick="document.getElementById('cam-src-input').value='webcam:0'; document.getElementById('cam-name-input').value='Local Webcam';" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 font-mono">
+            Use Local Webcam (webcam:0)
+          </button>
+          <button onclick="document.getElementById('cam-src-input').value='demo:simulated'; document.getElementById('cam-name-input').value='Simulated Yard';" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 font-mono">
+            Use Demo Feed
+          </button>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t border-white/10">
+        <button onclick="closeCameraModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Cancel</button>
+        <button onclick="saveCamera()" class="px-4 py-2 rounded-xl bg-cyan-500/25 border border-cyan-400/50 text-cyan-200 text-xs font-bold">Save & Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DVR Clip Playback Modal -->
+  <div id="clip-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel rounded-2xl max-w-3xl w-full p-4 space-y-3 border border-cyan-400/30">
+      <div class="flex items-center justify-between">
+        <h3 id="clip-modal-title" class="text-sm font-bold text-white font-mono">DVR Event Replay</h3>
+        <button onclick="closeClipModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+      <video id="clip-video" controls autoplay class="w-full rounded-xl bg-black aspect-video"></video>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

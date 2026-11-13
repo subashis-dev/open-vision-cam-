@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments & Secrets
+venv/
+env/
+.venv/
+ENV/
+.env
+.env.*
+*.log
+
+# Storage & Recorded Clips (user-generated local footage)
+storage/clips/*.mp4
+storage/clips/*.avi
+storage/thumbnails/*.jpg
+storage/events.json
+storage/config.json
+
+# Keep directory structure
+!storage/clips/.gitkeep
+!storage/thumbnails/.gitkeep
+
+# IDE & OS artifacts
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
